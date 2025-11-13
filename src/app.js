@@ -118,12 +118,7 @@ app.listen(PORT, () => {
 });
 
 
-app.post("/webhook", async (req, res) => {
-  //registrarAprovado(req.email)
-  console.log("✅ Webhook recebido:", req.body);
 
-  
-});
 
 app.post("/api/midias", autenticarToken, verificarValidade, (req, res)=>{
   res.status(200).json({ sucesso: true, mensagem: "teste" });
@@ -141,3 +136,10 @@ app.post("/create-pix-payment", async (req, res) => {
     res.status(500).json({ error: "Erro ao criar pagamento PIX" });
   }
 }); 
+
+app.post("/webhook", async (req, res) => {
+  //registrarAprovado(req.email)
+  console.log("✅ Webhook recebido:", req.body.data.id);
+
+  
+});

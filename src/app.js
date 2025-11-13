@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import { cadastrar, login, solicitarRecuperacao, redefinirSenha } from "./auth.js";
 import { criarPagamentoPix } from "./payment/mercadopago.js";
 import { verificarValidade } from "./payment/validade.js"; 
+import {registrarAprovado} from "./db.js"
 
 dotenv.config();
 
@@ -118,9 +119,10 @@ app.listen(PORT, () => {
 
 
 app.post("/webhook", async (req, res) => {
-
+  //registrarAprovado(req.email)
   console.log("✅ Webhook recebido:", req.body);
-
+    
+  
 });
 
 app.post("/api/midias", autenticarToken, verificarValidade, (req, res)=>{

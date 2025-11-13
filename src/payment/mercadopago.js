@@ -1,7 +1,7 @@
 import { MercadoPagoConfig, Payment } from "mercadopago";
 import dotenv from "dotenv";
 dotenv.config();
-import { salvarPagamento  } from "./mercadopagoDB.js";
+import { salvarPagamento, buscarPagamentosEmail, registrarAprovado} from "./mercadopagoDB.js";
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.accessToken,
@@ -9,48 +9,94 @@ const client = new MercadoPagoConfig({
 
 const payment = new Payment(client);
 
+function nowMysqlFormat() {
+  const d = new Date();
+  return d.toISOString().slice(0, 19).replace("T", " ");
+}
 
 export async function criarPagamentoPix(amount, description, email, notificationUrl = "http://157.254.54.238:3001/webhook") {
-
-const agora = new Date().toISOString().split('T')[0];
-let backup_id;
+  let backup_id = null;
 
   try {
-    const response = await payment.create({
-      body: {
-        transaction_amount: amount,
-        description,
-        payment_method_id: "pix",
-        payer: { email },
-        notification_url: notificationUrl,
-      },
-      requestOptions: {
-        idempotencyKey: `${agora}/${amount}`,
-      },
-    });
+    console.log("email", email);
 
-    console.log("✅ Pagamento criado com sucesso!");
-    backup_id = response.id
-    const save = {email, amount, payment_id: response.id, status: response.status, json: response }
-    await salvarPagamento(save);
+    const pagamentoDB = await buscarPagamentosEmail(email);
+    const hoje = new Date();
+    let deveCriarNovo = false;
+
+    // Caso exista pagamento prévio
+    if (pagamentoDB) {
+      const dataPagamento = new Date(pagamentoDB.created);
+      const validade = new Date(dataPagamento);
+      validade.setDate(validade.getDate() + 2); // validade de 2 dias
+
+      // REGRAS para gerar novo pagamento:
+      if (pagamentoDB.status === "cancelled") deveCriarNovo = true;
+      if (hoje > validade) deveCriarNovo = true;
+    } 
+    else {
+      deveCriarNovo = true;
+    }
+
+    let response;
+
+    if (deveCriarNovo) {
+      console.log("*** Criando novo pagamento");
+
+      response = await payment.create({
+        body: {
+          transaction_amount: amount,
+          description,
+          payment_method_id: "pix",
+          payer: { email },
+          notification_url: notificationUrl,
+        }
+      });
+
+      backup_id = response.id;
+
+      const save = {
+        email,
+        amount,
+        payment_id: response.id,
+        status: response.status,
+        json: response,
+      };
+
+      await salvarPagamento(save);
+
+    } else {
+      console.log("*** Usando pagamento existente");
+
+      // uso o JSON salvo no banco
+      response = pagamentoDB.json;
+    }
+
+    console.log("✅ Pagamento retornado com sucesso!");
     return response;
+
   } catch (error) {
     console.error("❌ Erro ao criar pagamento:", error);
-    cancelarPagamento(backup_id);
+
+    if (backup_id) {
+      console.log("Cancelando pagamento criado antes do erro...");
+      await cancelarPagamento(backup_id);
+    }
+
     throw error;
   }
 }
-
-
 
 export async function cancelarPagamento(paymentId) {
   try {
     if (!paymentId) {
       throw new Error("ID do pagamento é obrigatório para cancelar.");
     }
+
     const response = await payment.cancel({ id: paymentId });
     console.log(`✅ Pagamento ${paymentId} cancelado com sucesso.`);
     return response;
+
   } catch (error) {
     console.error("❌ Erro ao cancelar pagamento:", error);
     throw error;

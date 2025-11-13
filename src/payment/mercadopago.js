@@ -14,7 +14,7 @@ function nowMysqlFormat() {
   return d.toISOString().slice(0, 19).replace("T", " ");
 }
 
-export async function criarPagamentoPix(amount, description, email, notificationUrl = "http://157.254.54.238:3001/webhook") {
+export async function criarPagamentoPix(amount, description, email, notificationUrl = "https://cinetrix.vercel.app/webhook") {
   let backup_id = null;
 
   try {

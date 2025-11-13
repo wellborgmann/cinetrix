@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Pagamento PIX</h1>
+</body>
+</html>
+
+<script>
+    async function criarPagamentoPix() {
+        const response = await fetch('/create-pix-payment', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ amount: 0.05, description: "Pagamento de teste", email: "wellborgmann2@gmail.com" }) // Exemplo de valor
+        });
+        const data = await response.json();
+        console.log(data);
+    }
+
+    criarPagamentoPix();
+</script>       

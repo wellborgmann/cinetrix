@@ -1,0 +1,13 @@
+
+# Dependências
+/node_modules
+
+# Variáveis de Ambiente e Arquivos de Build
+.env
+dist/
+/build
+*.log
+
+# Arquivos de Sistema Específicos (Opcional, mas recomendado)
+.DS_Store
+npm-debug.log*

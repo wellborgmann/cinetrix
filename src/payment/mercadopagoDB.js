@@ -95,14 +95,3 @@ export async function buscarPagamentosEmail(email) {
   }
 }
 
-(async()=>{
-
-    try {
-      await   buscarPagamentos()
-      await cancelarPagamento("133627174060")
-      console.log("pagamneto cancelado =)")
-    } catch (error) {
-        console.log(error)
-    }
-
-})();

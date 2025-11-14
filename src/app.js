@@ -44,6 +44,10 @@ app.get("/home", autenticarToken, (req, res) => {
   res.sendFile(path.join(__dirname, "views", "home.html"));
 });
 
+app.get("/pix", autenticarToken, (req, res) => {
+  res.sendFile(path.join(__dirname, "views", "pix.html"));
+});
+
 // Rotas APIs
 app.post("/api/cadastro", async (req, res) => {
   try {

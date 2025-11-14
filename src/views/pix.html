@@ -1,27 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>Página de Pagamento</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; }
+    </style>
 </head>
 <body>
-    <h1>Pagamento PIX</h1>
+
+    <h1>Área de Pagamento</h1>
+
+    <p>Olá, <strong id="email-do-usuario">carregando...</strong>!</p>
+    <p>Use o QR Code abaixo para realizar o pagamento.</p>
+
+    <!-- Seu QR Code e outras informações aqui -->
+    <!-- <img src="caminho/para/seu/qrcode.png" alt="QR Code PIX"> -->
+
+    <script>
+        // Esta função será executada assim que a página terminar de carregar
+        window.onload = function() {
+            const emailElement = document.getElementById('email-do-usuario');
+
+            // Verifica se o objeto "Android" que injetamos existe
+            // Isso evita erros caso a página seja aberta em um navegador normal
+            if (typeof Android !== 'undefined' && typeof Android.getUserEmail === 'function') {
+                
+                // Chama a função getUserEmail() da nossa classe Kotlin!
+                const emailDoApp = Android.getUserEmail();
+
+                if (emailDoApp) {
+                    // Exibe o e-mail na tela
+                    emailElement.textContent = emailDoApp;
+                } else {
+                    emailElement.textContent = 'Visitante';
+                }
+
+            } else {
+                // Mensagem padrão se a página não for aberta pelo app
+                emailElement.textContent = 'usuário';
+                console.log("Interface 'Android' não encontrada. A página está em um navegador comum?");
+            }
+        };
+    </script>
+
 </body>
 </html>
-
-<script>
-    async function criarPagamentoPix() {
-        const response = await fetch('/create-pix-payment', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ amount: 0.05, description: "Pagamento de teste", email: "wellborgmann2@gmail.com" }) // Exemplo de valor
-        });
-        const data = await response.json();
-        console.log(data);
-    }
-
-    criarPagamentoPix();
-</script>       

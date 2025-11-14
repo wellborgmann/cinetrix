@@ -183,7 +183,7 @@
         });
 
         const data = await res.json();
-
+        alert(JSON.stringify(data))
         if (!data.qr_code) {
             alert("Erro ao gerar PIX.");
             return;

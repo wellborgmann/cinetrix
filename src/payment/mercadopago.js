@@ -24,6 +24,7 @@ import { json } from "express";
 
   export async function cancelarPagamento(paymentId) {
     try {
+      
       if (!paymentId) {
         throw new Error("ID do pagamento é obrigatório para cancelar.");
       }
@@ -104,7 +105,7 @@ export async function criarPagamentoPix(amount, description, email, notification
       };
 
       await salvarPagamento(save);
-      console.log(response);
+
 
       return {
         id: response.id || null,
@@ -115,7 +116,7 @@ export async function criarPagamentoPix(amount, description, email, notification
         status: response.status,
       };
     } else {
-      console.log("*** Usando pagamento existente", pagamentoDB);
+
       return {
         id: pagamentoDB.id,
         url: pagamentoDB.url || null,
@@ -136,31 +137,11 @@ export async function criarPagamentoPix(amount, description, email, notification
 
 
 
-export async function criarPagamento(amount, description, email, notificationUrl = "https://cinetrix.vercel.app/webhook"){
-  try {
-      let deveCriarNovo;
-     const pagamentoDB = await buscarPagamentosEmail(email);
-    const hoje = new Date();
-      const dataPagamento = new Date(pagamentoDB.created);
-      const validade = new Date(dataPagamento);
-      validade.setDate(validade.getDate() + 2);
 
-
-          console.log("valor:", pagamentoDB.amount)
-      if(hoje > validade){
-        console.log("vencido")
-        console.log(`hoje: ${hoje} vencimento: ${validade}`)
-      }else{
-           console.log("valido")
-      }
-  } catch (error) {
-    console.log(error)
-  }
-}
 
 (async()=>{
 
-  const data = await criarPagamento(10, "Assinatura de 1 mês(es)", "wellborgmann2@gmail.com");
-  console.log(data);
+  //const data = await criarPagamento(10, "Assinatura de 1 mês(es)", "wellborgmann2@gmail.com");
+  //console.log(data);
 
 })()

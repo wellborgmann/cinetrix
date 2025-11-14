@@ -130,7 +130,8 @@ app.post("/create-pix-payment", async (req, res) => {
 // Webhook Mercado Pago
 app.post("/webhook", async (req, res) => {
   try {
-    const id = req?.body?.id;
+        //console.log("paymentId",req.body.data.id)
+    const id = req.body.data.id;
     if (!id) return res.status(400).send("ID ausente");
 
     console.log("Webhook recebido:", id);

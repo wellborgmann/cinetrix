@@ -11,7 +11,7 @@ router.use((req, res, next) => {
 });
 
 
-router.use(autenticarToken, verificarValidade);
+router.use( verificarValidade);
 
 await carregarMidias();
 

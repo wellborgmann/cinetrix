@@ -3,47 +3,210 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página de Pagamento</title>
+    <title>Pagamento PIX</title>
+
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; }
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            width: 95%;
+            max-width: 420px;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 5px;
+            color: #222;
+        }
+
+        .price-box {
+            background: #f8f8f8;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button {
+            background: #0f62fe;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-size: 17px;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #0041c4;
+        }
+
+        .pix-area {
+            display: none;
+            margin-top: 25px;
+        }
+
+        img.qr {
+            width: 240px;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 15px;
+            background: #fff;
+            padding: 10px;
+        }
+
+        .copy-box {
+            margin-top: 20px;
+            background: #f7f7f7;
+            padding: 12px;
+            border-radius: 10px;
+            word-wrap: break-word;
+            text-align: left;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            background: #49b043;
+        }
+
+        .copy-btn:hover {
+            background: #3c8e37;
+        }
+
+        .msg {
+            margin-top: 10px;
+            color: green;
+            font-size: 15px;
+            display: none;
+        }
+
     </style>
 </head>
 <body>
 
-    <h1>Área de Pagamento</h1>
+<div class="container">
 
-    <p>Olá, <strong id="email-do-usuario">carregando...</strong>!</p>
-    <p>Use o QR Code abaixo para realizar o pagamento.</p>
+    <h2>Pagamento via PIX</h2>
 
-    <!-- Seu QR Code e outras informações aqui -->
-    <!-- <img src="caminho/para/seu/qrcode.png" alt="QR Code PIX"> -->
+    <p>Olá, <strong id="email-user">carregando...</strong></p>
 
-    <script>
-        // Esta função será executada assim que a página terminar de carregar
-        window.onload = function() {
-            const emailElement = document.getElementById('email-do-usuario');
+    <div class="price-box">
+        Valor: <strong id="valor">R$ 20,00</strong><br>
+        <small>Escolha quantos meses:</small><br>
+        <input type="number" id="meses" min="1" max="12" value="1">
+    </div>
 
-            // Verifica se o objeto "Android" que injetamos existe
-            // Isso evita erros caso a página seja aberta em um navegador normal
-            if (typeof Android !== 'undefined' && typeof Android.getUserEmail === 'function') {
-                
-                // Chama a função getUserEmail() da nossa classe Kotlin!
-                const emailDoApp = Android.getUserEmail();
+    <button id="btnCriarPix">Gerar PIX</button>
 
-                if (emailDoApp) {
-                    // Exibe o e-mail na tela
-                    emailElement.textContent = emailDoApp;
-                } else {
-                    emailElement.textContent = 'Visitante';
-                }
+    <!-- ÁREA DO PIX GERADO -->
+    <div class="pix-area" id="pixArea">
 
-            } else {
-                // Mensagem padrão se a página não for aberta pelo app
-                emailElement.textContent = 'usuário';
-                console.log("Interface 'Android' não encontrada. A página está em um navegador comum?");
-            }
-        };
-    </script>
+        <h3>Escaneie o QR Code</h3>
+        <img id="qrImg" class="qr" src="" alt="QR Code PIX">
+
+        <div class="copy-box">
+            <strong>Chave copia e cola:</strong>
+            <p id="copyPix"></p>
+            <button class="copy-btn" onclick="copiar()">Copiar chave PIX</button>
+            <p class="msg" id="msgCopiado">Copiado!</p>
+        </div>
+    </div>
+
+</div>
+
+
+<script>
+    const mesesInput = document.getElementById("meses");
+    const spanValor = document.getElementById("valor");
+
+    mesesInput.addEventListener("input", () => {
+        let q = Number(mesesInput.value);
+
+        if (q < 1) q = mesesInput.value = 1;
+        if (q > 12) q = mesesInput.value = 12;
+
+        spanValor.textContent = `R$ ${q * 20},00`;
+    });
+
+
+    // PEGAR EMAIL DO ANDROID WEBVIEW
+    window.onload = function () {
+        const emailElement = document.getElementById('email-user');
+
+        if (typeof Android !== "undefined" && typeof Android.getUserEmail === "function") {
+            const email = Android.getUserEmail();
+            emailElement.textContent = email || "Visitante";
+        } else {
+            emailElement.textContent = "usuário";
+        }
+    };
+
+
+    // ENVIAR PARA A API
+    document.getElementById("btnCriarPix").addEventListener("click", async () => {
+        const email = document.getElementById("email-user").textContent;
+        const quant = Number(mesesInput.value);
+        const description = `Assinatura de ${quant} mês(es)`;
+
+        const body = { quant, description, email };
+
+        const res = await fetch("/create-pix-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+
+        if (!data.qr_code) {
+            alert("Erro ao gerar PIX.");
+            return;
+        }
+
+        document.getElementById("pixArea").style.display = "block";
+        document.getElementById("qrImg").src = "data:image/png;base64," + data.qr_code;
+        document.getElementById("copyPix").textContent = data.copy;
+    });
+
+
+    // COPIAR CHAVE
+    function copiar() {
+        const chave = document.getElementById("copyPix").textContent;
+        navigator.clipboard.writeText(chave);
+
+        const msg = document.getElementById("msgCopiado");
+        msg.style.display = "block";
+        setTimeout(() => msg.style.display = "none", 1500);
+    }
+
+</script>
+
 
 </body>
 </html>

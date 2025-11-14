@@ -109,9 +109,8 @@ app.post("/api/resetar", async (req, res) => {
 // PIX
 app.post("/create-pix-payment", async (req, res) => {
   try {
-    const { amount, description, email } = req.body;
-    if (!email || !description || !amount)
-      return res.status(400).json({ error: "Dados inválidos" });
+    const { quant, description, email } = req.body;
+    if (!email || !description || !quant) return res.status(400).json({ error: "Dados inválidos" });
 
     const response = await criarPagamentoPix(amount, description, email);
     res.json(response);

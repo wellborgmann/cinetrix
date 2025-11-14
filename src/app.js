@@ -115,7 +115,7 @@ app.post("/create-pix-payment", async (req, res) => {
       return res.status(400).json({ error: "Dados inválidos" });
     }
 
-    const amount = quant * 10; // sem espaço, sem erro
+    const amount = quant * 0.05; // sem espaço, sem erro
 
     const response = await criarPagamentoPix(amount, description, email);
 

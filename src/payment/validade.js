@@ -7,8 +7,8 @@ export async function verificarValidade(req, res, next) {
     const pagamento = await buscarPagamentosEmail(email);
 
     // ✅ Verifica se pagamento existe
-    if (!pagamento || !pagamento.created) {
-      console.log("⚠️ Pagamento não encontrado ou sem data de criação.");
+    if (!pagamento || !pagamento.created_at) {
+      console.log("⚠️ Pagamento não encontrado ou sem data de criação." , email);
       return res.status(403).json({ sucesso: false, erro: "Acesso negado: pagamento não encontrado." });
     }
 
@@ -18,7 +18,7 @@ export async function verificarValidade(req, res, next) {
       return res.status(403).json({ sucesso: false, erro: "Pagamento não aprovado." });
     }
 
-    const dataPagamento = new Date(pagamento.created);
+    const dataPagamento = new Date(pagamento.created_at);
     const validade = new Date(dataPagamento);
     validade.setDate(validade.getDate() + 30); // adiciona 30 dias de validade
     const hoje = new Date();

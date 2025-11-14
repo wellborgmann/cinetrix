@@ -35,6 +35,18 @@
     window.location.href = "/";
   
     });
+
+(async () => {
+  const res = await fetch("/api/midias/buscar/matrix", {
+    method: "GET",
+    credentials: "include"
+  });
+
+  console.log("Headers enviados:", [...res.headers.entries()]);
+})();
+
+
+    
   </script>
 </body>
 </html>

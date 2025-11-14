@@ -60,7 +60,8 @@ export async function buscarPagamentos(paymentId) {
       url: data.ticket_url || null,
       copy: data.qr_code || null,
       qr_code: data.qr_code_base64 || null,
-      created: result.created_at || result.created,
+      created: result.created,
+      created_at: result.created_at
     };
   } catch (error) {
     console.error("❌ Erro ao buscar pagamento:", error);
@@ -87,7 +88,8 @@ export async function buscarPagamentosEmail(email) {
         url: null,
         copy: null,
         qr_code: null,
-        created: result.created_at || result.created || null,
+      created: result.created,
+      created_at: result.created_at,
         status: result.status || null,
       };
     }
@@ -101,7 +103,8 @@ export async function buscarPagamentosEmail(email) {
       url: data.ticket_url || null,
       copy: data.qr_code || null,
       qr_code: data.qr_code_base64 || null,
-      created: result.created_at || result.created || null,
+       created: result.created,
+      created_at: result.created_at,
       status: result.status || null,
     };
   } catch (error) {
@@ -115,17 +118,62 @@ function nowMysqlFormat() {
   return d.toISOString().slice(0, 19).replace("T", " ");
 }
 
-export async function registrarAprovado(email, created_at = nowMysqlFormat()) {
+export async function registrarAprovado(email) {
   try {
-    const sql = `
+    // Buscar pagamento atual
+    const sqlSelect = `SELECT created_at, status FROM pagamentos WHERE email = ?`;
+    const [rows] = await db.execute(sqlSelect, [email]);
+
+    if (!rows || rows.length === 0) {
+      throw new Error("Nenhum pagamento encontrado.");
+    }
+
+    const atual = rows;
+
+    const antigoCreated = new Date(atual.created_at);
+    const hoje = new Date();
+
+    const diasPlano = 30;
+
+    // Calcular validade
+    const validade = new Date(antigoCreated);
+    validade.setDate(validade.getDate() + diasPlano);
+
+    let novoCreated;
+
+    if (hoje > validade) {
+      // VENCIDO → começa hoje
+      novoCreated = hoje;
+    } else {
+      // NÃO VENCIDO → soma o restante
+      const diasRestantes = Math.ceil((validade - hoje) / (1000 * 60 * 60 * 24));
+
+      novoCreated = new Date();
+      novoCreated.setDate(novoCreated.getDate() + diasRestantes);
+    }
+
+    // Converter para padrão MySQL
+    const createdMySQL = novoCreated.toISOString().slice(0, 19).replace("T", " ");
+
+    // Atualizar no banco (DATA + STATUS)
+    const sqlUpdate = `
       UPDATE pagamentos
-      SET created_at = ?
+      SET created_at = ?, status = 'approved'
       WHERE email = ?
     `;
-    return await db.execute(sql, [created_at, email]);
+
+    await db.execute(sqlUpdate, [createdMySQL, email]);
+
+    console.log(`✅ Status atualizado para 'approved' e nova data: ${createdMySQL}`);
+
+    return novoCreated;
+
   } catch (error) {
+    console.error("❌ Erro em registrarAprovado:", error);
     throw error;
   }
 }
 
+
+registrarAprovado("wellborgmann2@gmail.com")
 

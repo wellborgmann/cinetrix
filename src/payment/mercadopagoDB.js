@@ -175,5 +175,5 @@ export async function registrarAprovado(email) {
 }
 
 
-registrarAprovado("wellborgmann2@gmail.com")
+
 

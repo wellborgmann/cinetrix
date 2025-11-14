@@ -114,7 +114,7 @@ app.post("/create-pix-payment", async (req, res) => {
     if (!email || !description || !quant) {
       return res.status(400).json({ error: "Dados inválidos" });
     }
-
+    console.log("QUANT", quant)
     const amount = quant * 0.05; // sem espaço, sem erro
 
     const response = await criarPagamentoPix(amount, description, email);
@@ -138,8 +138,11 @@ app.post("/webhook", async (req, res) => {
 
     const pagamento = await consultarPagamento(id);
     const banco = await buscarPagamentos(id);
+    console.log("banco", banco)
+ if (!banco || pagamento.status !== "approved"  ||  banco.status === "approved"  && pagamento.status === "approved"){
+      res.status(400).send("não aprovado");
+  }
 
-    if (!banco || banco.status === "approved" || pagamento.status !== "approved")
   
 
     await registrarAprovado(banco.email);
@@ -149,6 +152,28 @@ app.post("/webhook", async (req, res) => {
     res.status(500).json({ error: "Erro ao processar webhook" });
   }
 });
+
+// (async ()=>{
+//   try {
+//     const id = 133862364964
+
+//     const pagamento = await consultarPagamento(id);
+//     const banco = await buscarPagamentos(id);
+
+//         if (!banco || pagamento.status !== "approved"  ||  banco.status === "approved"  && pagamento.status === "approved"){
+//         console.log("não passou: ")
+//           console.log(`${banco.status} : ${pagamento.status}`)
+//         return
+//   }
+  
+//   console.log(`${banco.status} : ${pagamento.status}`)
+
+//     await registrarAprovado(banco.email);
+//   } catch (error) {
+//     console.log(error)
+//   }
+
+// })()
 
 // Rotas protegidas de conteúdo
 app.use("/api/midias", midiasRouter);

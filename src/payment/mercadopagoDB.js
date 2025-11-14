@@ -43,32 +43,29 @@ export async function buscarPagamentos(paymentId) {
       throw new Error("Pagamento não encontrado.");
     }
 
-    const result = rows[0];
-    let response;
+    const result = rows;
 
-    try {
-      response = JSON.parse(result.response);
-    } catch (err) {
-      console.error("⚠️ Erro ao interpretar JSON:", result.response);
-      throw new Error("JSON inválido no campo 'response'.");
-    }
+   //console.log(result)
 
-    const data = response?.point_of_interaction?.transaction_data || {};
+    const data = result?.response.point_of_interaction?.transaction_data || {};
 
     return {
-      id: result.payment_id,
+      email: result.email,
+      id: data.payment_id,
       url: data.ticket_url || null,
       copy: data.qr_code || null,
       qr_code: data.qr_code_base64 || null,
       created: result.created,
       created_at: result.created_at,
-      amount: result.amount
+      amount: result.amount,
+      status: result.status
     };
   } catch (error) {
     console.error("❌ Erro ao buscar pagamento:", error);
     throw error;
   }
 }
+
 
 
 export async function buscarPagamentosEmail(email) {
@@ -83,7 +80,7 @@ export async function buscarPagamentosEmail(email) {
     const result = rows;
   
     if (!result.response) {
-      console.warn("⚠️ Campo 'response' ausente ou indefinido no registro:", result);
+      //console.warn("⚠️ Campo 'response' ausente ou indefinido no registro:", result);
       return {
         id: result.payment_id || null,
         url: null,
@@ -100,6 +97,7 @@ export async function buscarPagamentosEmail(email) {
     const data = response?.point_of_interaction?.transaction_data || {};
 
     return {
+      email: result.email,
       id: result.payment_id || null,
       url: data.ticket_url || null,
       copy: data.qr_code || null,
@@ -114,6 +112,15 @@ export async function buscarPagamentosEmail(email) {
     throw error;
   }
 }
+
+// (async()=>{
+// try {
+//   const data = await buscarPagamentosEmail("wellborgmann2@gmail.com");
+//   console.log(data);
+// } catch (error) {
+  
+// }
+// })()
 
 function nowMysqlFormat() {
   const d = new Date();

@@ -44,9 +44,9 @@ export async function consultarPagamento(paymentId) {
   try {
     const response = await payment.get({ id: paymentId });
 
-    console.log("Status:", response.status);
-    console.log("Detalhes:", response);
-
+    //console.log("Status:", response.status);
+    //console.log("Detalhes:", response);
+    return response
        if (response.payer) {
       console.log("Email do payer:", response.payer.email);
     } else {
@@ -75,7 +75,7 @@ export async function criarPagamentoPix(amount, description, email, notification
       const validade = new Date(dataPagamento);
       validade.setDate(validade.getDate() + 2);
 
-      if (pagamentoDB.status === "cancelled") deveCriarNovo = true;
+      if (pagamentoDB.status === "cancelled" || pagamentoDB.status === "approved") deveCriarNovo = true;
       if (hoje.getTime() > validade.getTime()) deveCriarNovo = true;
       if (Number(pagamentoDB.amount) !== Number(amount)) deveCriarNovo = true;
     } else {

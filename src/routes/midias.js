@@ -11,7 +11,10 @@ router.use((req, res, next) => {
 });
 
 
-router.use( verificarValidade);
+router.use(autenticarToken);
+
+// 🟢 Depois valida pagamento
+router.use(verificarValidade);
 
 await carregarMidias();
 

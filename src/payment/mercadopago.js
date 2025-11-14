@@ -71,7 +71,7 @@
 
         // uso o JSON salvo no banco
                   return {
-      id: response.payment_id || null,
+      id: response.id || null,
       url: response.ticket_url || null,
       copy: response.qr_code || null,
       qr_code: response.qr_code_base64 || null,
@@ -84,7 +84,7 @@
 
       console.log("✅ Pagamento retornado com sucesso!");
           return {
-      id: response.payment_id || null,
+      id: response.id || null,
       url: response.ticket_url || null,
       copy: response.qr_code || null,
       qr_code: response.qr_code_base64 || null,

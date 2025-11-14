@@ -61,7 +61,8 @@ export async function buscarPagamentos(paymentId) {
       copy: data.qr_code || null,
       qr_code: data.qr_code_base64 || null,
       created: result.created,
-      created_at: result.created_at
+      created_at: result.created_at,
+      amount: result.amount
     };
   } catch (error) {
     console.error("❌ Erro ao buscar pagamento:", error);
@@ -106,6 +107,7 @@ export async function buscarPagamentosEmail(email) {
        created: result.created,
       created_at: result.created_at,
       status: result.status || null,
+      amount: result.amount || null
     };
   } catch (error) {
     console.error("❌ Erro ao buscar pagamento:", error);
@@ -124,11 +126,14 @@ export async function registrarAprovado(email) {
     const sqlSelect = `SELECT created_at, status FROM pagamentos WHERE email = ?`;
     const [rows] = await db.execute(sqlSelect, [email]);
 
-    if (!rows || rows.length === 0) {
-      throw new Error("Nenhum pagamento encontrado.");
-    }
+if (!rows || rows.length === 0) {
+  return null;
+}
 
-    const atual = rows;
+// Pega o primeiro registro do array
+const result = Array.isArray(rows) ? rows[0] : rows;
+
+    const atual = result;
 
     const antigoCreated = new Date(atual.created_at);
     const hoje = new Date();

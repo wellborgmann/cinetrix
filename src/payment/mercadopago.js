@@ -2,6 +2,7 @@
   import dotenv from "dotenv";
   dotenv.config();
   import { salvarPagamento, buscarPagamentosEmail, registrarAprovado} from "./mercadopagoDB.js";
+import { json } from "express";
 
   const client = new MercadoPagoConfig({
     accessToken: process.env.accessToken,
@@ -14,97 +15,12 @@
     return d.toISOString().slice(0, 19).replace("T", " ");
   }
 
-  export async function criarPagamentoPix(amount, description, email, notificationUrl = "https://cinetrix.vercel.app/webhook") {
-    let backup_id = null;
-
-    try {
-      console.log("email", email);
-
-      const pagamentoDB = await buscarPagamentosEmail(email);
-      const hoje = new Date();
-      let deveCriarNovo = false;
-
-      // Caso exista pagamento prévio
-      if (pagamentoDB) {
-        const dataPagamento = new Date(pagamentoDB.created);
-        const validade = new Date(dataPagamento);
-        validade.setDate(validade.getDate() + 2); // validade de 2 dias
-
-        // REGRAS para gerar novo pagamento:
-        if (pagamentoDB.status === "cancelled") deveCriarNovo = true;
-        if (hoje > validade) deveCriarNovo = true;
-      } 
-      else {
-        deveCriarNovo = true;
-      }
-
-      let response;
-
-      if (deveCriarNovo) {
-        console.log("*** Criando novo pagamento");
-
-   response = await payment.create({
-  body: {
-    transaction_amount: amount,
-    description,
-    payment_method_id: "pix",
-    payer: { email },
-    notification_url: notificationUrl,
-  }
-});
 
 
-        backup_id = response.id;
 
-        const save = {
-          email,
-          amount,
-          payment_id: response.id,
-          status: response.status,
-          json: response,
-        };
 
-        await salvarPagamento(save);
 
-      } else {
-        console.log("*** Usando pagamento existente");
 
-        // uso o JSON salvo no banco
-    return {
-        id: pagamentoDB.payment_id,
-        url: pagamentoDB.json?.ticket_url || null,
-        copy: pagamentoDB.json?.qr_code || null,
-        qr_code: pagamentoDB.json?.qr_code_base64 || null,
-        created: pagamentoDB.created || null,
-        created_at: pagamentoDB.created_at || null,
-        status: pagamentoDB.status
-    };
-      
-      }
-
-      console.log("✅ Pagamento retornado com sucesso!");
-          return {
-      id: response.id || null,
-      url: response.ticket_url || null,
-      copy: response.qr_code || null,
-      qr_code: response.qr_code_base64 || null,
-       created: pagamentoDB?.created ||  null,
-      created_at: pagamentoDB?.created_at || null,
-      status: response.status 
-    };
-     
-
-    } catch (error) {
-      console.error("❌ Erro ao criar pagamento:", error);
-
-      if (backup_id) {
-        console.log("Cancelando pagamento criado antes do erro...");
-        await cancelarPagamento(backup_id);
-      }
-
-      throw error;
-    }
-  }
 
   export async function cancelarPagamento(paymentId) {
     try {
@@ -143,3 +59,108 @@ export async function consultarPagamento(paymentId) {
   }
 }
 
+
+
+export async function criarPagamentoPix(amount, description, email, notificationUrl = "https://cinetrix.vercel.app/webhook") {
+  try {
+    console.log(`xxxx ${email}, ${amount}, ${description}, ${email}`);
+
+    const pagamentoDB = await buscarPagamentosEmail(email);
+    const hoje = new Date();
+    let deveCriarNovo = false;
+
+    if (pagamentoDB && pagamentoDB?.amount) {
+      const dataPagamento = new Date(pagamentoDB.created);
+      const validade = new Date(dataPagamento);
+      validade.setDate(validade.getDate() + 2);
+
+      if (pagamentoDB.status === "cancelled") deveCriarNovo = true;
+      if (hoje.getTime() > validade.getTime()) deveCriarNovo = true;
+      if (Number(pagamentoDB.amount) !== Number(amount)) deveCriarNovo = true;
+    } else {
+      deveCriarNovo = true;
+    }
+
+    let response;
+    if (deveCriarNovo) {
+      console.log("*** Criando novo pagamento");
+      response = await payment.create({
+        body: {
+          transaction_amount: amount,
+          description,
+          payment_method_id: "pix",
+          payer: { email },
+          notification_url: notificationUrl,
+        },
+      });
+
+      const save = {
+        email,
+        amount,
+        payment_id: response.id,
+        status: response.status,
+        json: response,
+        created_at: nowMysqlFormat(),
+      };
+
+      await salvarPagamento(save);
+      console.log(response);
+
+      return {
+        id: response.id || null,
+        url: response.point_of_interaction.transaction_data.ticket_url || null,
+        copy: response.point_of_interaction.transaction_data.qr_code || null,
+        qr_code: response.point_of_interaction.transaction_data.qr_code_base64 || null,
+        created: save.created_at,
+        status: response.status,
+      };
+    } else {
+      console.log("*** Usando pagamento existente", pagamentoDB);
+      return {
+        id: pagamentoDB.id,
+        url: pagamentoDB.url || null,
+        copy: pagamentoDB.copy || null,
+        qr_code: pagamentoDB.qr_code || null,
+        created: pagamentoDB.created || null,
+        created_at: pagamentoDB.created_at || null,
+        status: pagamentoDB.status,
+      };
+    }
+  } catch (error) {
+    console.error("❌ Erro ao criar pagamento:", error);
+    throw error;
+  }
+}
+
+
+
+
+
+export async function criarPagamento(amount, description, email, notificationUrl = "https://cinetrix.vercel.app/webhook"){
+  try {
+      let deveCriarNovo;
+     const pagamentoDB = await buscarPagamentosEmail(email);
+    const hoje = new Date();
+      const dataPagamento = new Date(pagamentoDB.created);
+      const validade = new Date(dataPagamento);
+      validade.setDate(validade.getDate() + 2);
+
+
+          console.log("valor:", pagamentoDB.amount)
+      if(hoje > validade){
+        console.log("vencido")
+        console.log(`hoje: ${hoje} vencimento: ${validade}`)
+      }else{
+           console.log("valido")
+      }
+  } catch (error) {
+    console.log(error)
+  }
+}
+
+(async()=>{
+
+  const data = await criarPagamento(10, "Assinatura de 1 mês(es)", "wellborgmann2@gmail.com");
+  console.log(data);
+
+})()

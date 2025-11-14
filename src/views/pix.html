@@ -132,8 +132,9 @@
 
         <div class="copy-box">
             <strong>Chave copia e cola:</strong>
-            <p id="copyPix"></p>
+            <p id="copyPix"></p>    
             <button class="copy-btn" onclick="copiar()">Copiar chave PIX</button>
+            <button id="url">link do mercadopago</button>
             <p class="msg" id="msgCopiado">Copiado!</p>
         </div>
     </div>
@@ -163,7 +164,7 @@
             const email = Android.getUserEmail();
             emailElement.textContent = email || "Visitante";
         } else {
-            emailElement.textContent = "usuário";
+            emailElement.textContent = "wellborgmann2@gmail.com";
         }
     };
 
@@ -183,16 +184,15 @@
         });
 
         const data = await res.json();
-        console.log(data);
-        alert(data)
-        if (!data.qr_code) {
-            alert("Erro ao gerar PIX.");
+ 
+        if (!data.url) {
+            console.log(data)
+           
             return;
         }
 
-        document.getElementById("pixArea").style.display = "block";
-        document.getElementById("qrImg").src = "data:image/png;base64," + data.qr_code;
-        document.getElementById("copyPix").textContent = data.copy;
+           window.location.href = data.url
+     
     });
 
 

@@ -139,10 +139,11 @@ app.post("/webhook", async (req, res) => {
     const banco = await buscarPagamentos(id);
 
     if (!banco || banco.status === "approved" || pagamento.status !== "approved")
-      return res.sendStatus(200);
+  
 
     await registrarAprovado(banco.email);
-    res.sendStatus(200);
+    return res.sendStatus(200);
+    
   } catch {
     res.status(500).json({ error: "Erro ao processar webhook" });
   }

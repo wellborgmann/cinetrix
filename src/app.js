@@ -123,7 +123,7 @@ app.post("/create-pix-payment", async (req, res) => {
 
   } catch (err) {
     console.error("❌ Erro ao criar pagamento PIX:", err);
-    res.status(500).json({ error: "Erro ao criar pagamento PIX" });
+    res.status(500).json({ error: {quant, description, email} });
   }
 });
 

@@ -110,11 +110,19 @@ app.post("/api/resetar", async (req, res) => {
 app.post("/create-pix-payment", async (req, res) => {
   try {
     const { quant, description, email } = req.body;
-    if (!email || !description || !quant) return res.status(400).json({ error: "Dados inválidos" });
-      const amount  = quant * 10;
+
+    if (!email || !description || !quant) {
+      return res.status(400).json({ error: "Dados inválidos" });
+    }
+
+    const amount = quant * 10; // sem espaço, sem erro
+
     const response = await criarPagamentoPix(amount, description, email);
+
     res.json(response);
-  } catch {
+
+  } catch (err) {
+    console.error("❌ Erro ao criar pagamento PIX:", err);
     res.status(500).json({ error: "Erro ao criar pagamento PIX" });
   }
 });

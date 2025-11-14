@@ -70,14 +70,14 @@
         console.log("*** Usando pagamento existente");
 
         // uso o JSON salvo no banco
-                  return {
-      id: response.id || null,
-      url: response.ticket_url || null,
-      copy: response.qr_code || null,
-      qr_code: response.qr_code_base64 || null,
-       created: pagamentoDB?.created ||  null,
-      created_at: pagamentoDB?.created_at || null,
-      status: response.status 
+    return {
+        id: pagamentoDB.payment_id,
+        url: pagamentoDB.json?.ticket_url || null,
+        copy: pagamentoDB.json?.qr_code || null,
+        qr_code: pagamentoDB.json?.qr_code_base64 || null,
+        created: pagamentoDB.created || null,
+        created_at: pagamentoDB.created_at || null,
+        status: pagamentoDB.status
     };
       
       }

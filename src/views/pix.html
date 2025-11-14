@@ -176,7 +176,7 @@
 
         const body = { quant, description, email };
 
-        const res = await fetch("/create-pix-payment", {
+        const res = await fetch("https://cinetrix.vercel.app/create-pix-payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(body)

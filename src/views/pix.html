@@ -119,7 +119,7 @@
     <div class="price-box">
         Valor: <strong id="valor">R$ 20,00</strong><br>
         <small>Escolha quantos meses:</small><br>
-        <input type="number" id="meses" min="1" max="12" value="1">
+        <input type="number" id="meses" min="0" max="12" value="1">
     </div>
 
     <button id="btnCriarPix">Gerar PIX</button>
@@ -178,7 +178,7 @@
         const description = `Assinatura de ${quant} mês(es)`;
 
         const body = { quant, description, email };
-
+        if(quant < 1 || !email)return
         const res = await fetch("/create-pix-payment", {
             method: "POST",
             headers: { "Content-Type": "application/json" },

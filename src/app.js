@@ -153,27 +153,6 @@ app.post("/webhook", async (req, res) => {
   }
 });
 
-// (async ()=>{
-//   try {
-//     const id = 133862364964
-
-//     const pagamento = await consultarPagamento(id);
-//     const banco = await buscarPagamentos(id);
-
-//         if (!banco || pagamento.status !== "approved"  ||  banco.status === "approved"  && pagamento.status === "approved"){
-//         console.log("não passou: ")
-//           console.log(`${banco.status} : ${pagamento.status}`)
-//         return
-//   }
-  
-//   console.log(`${banco.status} : ${pagamento.status}`)
-
-//     await registrarAprovado(banco.email);
-//   } catch (error) {
-//     console.log(error)
-//   }
-
-// })()
 
 // Rotas protegidas de conteúdo
 app.use("/api/midias", midiasRouter);

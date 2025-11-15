@@ -141,7 +141,6 @@
 
 </div>
 
-
 <script>
     const mesesInput = document.getElementById("meses");
     const spanValor = document.getElementById("valor");
@@ -155,10 +154,10 @@
         spanValor.textContent = `R$ ${q * 10},00`;
     });
 
-
     // PEGAR EMAIL DO ANDROID WEBVIEW
     window.onload = function () {
-        const emailElement = document.getElementById('email-user');
+        try {
+             const emailElement = document.getElementById('email-user');
 
         if (typeof Android !== "undefined" && typeof Android.getUserEmail === "function") {
             const email = Android.getUserEmail();
@@ -166,8 +165,11 @@
         } else {
             emailElement.textContent = "usuário";
         }
+        } catch (error) {
+            
+        }
+       
     };
-
 
     // ENVIAR PARA A API
     document.getElementById("btnCriarPix").addEventListener("click", async () => {
@@ -184,17 +186,28 @@
         });
 
         const data = await res.json();
- 
-        if (!data.url) {
-            console.log(data)
-           
+
+        console.log("RESPOSTA PIX:", data);
+
+        if (!data.qr_code || !data.copy) {
+            alert("Erro ao gerar PIX.");
             return;
         }
 
-           window.location.href = data.url
-     
-    });
+        // MOSTRAR ÁREA DO PIX
+        document.getElementById("pixArea").style.display = "block";
 
+        // ⚡ INSERIR QR CODE BASE64
+        document.getElementById("qrImg").src = `data:image/png;base64,${data.qr_code}`;
+
+        // ⚡ INSERIR CHAVE COPIA E COLA
+        document.getElementById("copyPix").textContent = data.copy;
+
+        // ⚡ BOTÃO LINK DO MERCADO PAGO
+        document.getElementById("url").onclick = () => {
+            window.location.href = data.url;
+        };
+    });
 
     // COPIAR CHAVE
     function copiar() {
@@ -205,8 +218,8 @@
         msg.style.display = "block";
         setTimeout(() => msg.style.display = "none", 1500);
     }
-
 </script>
+
 
 
 </body>

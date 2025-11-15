@@ -1,5 +1,6 @@
+import { response } from "express";
 import db from "../db.js";
-import { cancelarPagamento } from "./mercadopago.js"; 
+import { cancelarPagamento } from "./mercadopago.js";
 export async function salvarPagamento(paymentData) {
   try {
     const sql = `
@@ -29,7 +30,7 @@ export async function salvarPagamento(paymentData) {
     console.log("✅ Finalizado tentativa de salvar/atualizar pagamento.");
   }
 }
-  
+
 
 
 
@@ -45,7 +46,7 @@ export async function buscarPagamentos(paymentId) {
 
     const result = rows;
 
-   //console.log(result)
+    //console.log(result)
 
     const data = result?.response.point_of_interaction?.transaction_data || {};
 
@@ -78,7 +79,7 @@ export async function buscarPagamentosEmail(email) {
     }
 
     const result = rows;
-  
+
     if (!result.response) {
       //console.warn("⚠️ Campo 'response' ausente ou indefinido no registro:", result);
       return {
@@ -86,14 +87,14 @@ export async function buscarPagamentosEmail(email) {
         url: null,
         copy: null,
         qr_code: null,
-      created: result.created,
-      created_at: result.created_at,
+        created: result.created,
+        created_at: result.created_at,
         status: result.status || null,
       };
     }
 
-    let response =result.response
- 
+    let response = result.response
+
     const data = response?.point_of_interaction?.transaction_data || {};
 
     return {
@@ -102,7 +103,7 @@ export async function buscarPagamentosEmail(email) {
       url: data.ticket_url || null,
       copy: data.qr_code || null,
       qr_code: data.qr_code_base64 || null,
-       created: result.created,
+      created: result.created,
       created_at: result.created_at,
       status: result.status || null,
       amount: result.amount || null
@@ -118,7 +119,7 @@ export async function buscarPagamentosEmail(email) {
 //   const data = await buscarPagamentosEmail("wellborgmann2@gmail.com");
 //   console.log(data);
 // } catch (error) {
-  
+
 // }
 // })()
 
@@ -133,12 +134,12 @@ export async function registrarAprovado(email) {
     const sqlSelect = `SELECT created_at, status FROM pagamentos WHERE email = ?`;
     const [rows] = await db.execute(sqlSelect, [email]);
 
-if (!rows || rows.length === 0) {
-  return null;
-}
+    if (!rows || rows.length === 0) {
+      return null;
+    }
 
-// Pega o primeiro registro do array
-const result = Array.isArray(rows) ? rows[0] : rows;
+    // Pega o primeiro registro do array
+    const result = Array.isArray(rows) ? rows[0] : rows;
 
     const atual = result;
 
@@ -188,4 +189,38 @@ const result = Array.isArray(rows) ? rows[0] : rows;
 
 
 
+
+export async function infoCadastro(email) {
+  try {
+    const sql = "SELECT * FROM login WHERE email = ?";
+    const [response] = await db.execute(sql, [email]);
+
+    if (!response || response.length === 0) {
+      return null;
+    }
+    //console.log(response)
+    const result = response;
+
+    if (!result) {
+      //console.warn("⚠️ Campo 'response' ausente ou indefinido no registro:", result);
+      throw "vazio"
+    }
+
+    const dataPagamento = new Date(response.timestamp);
+    const validade = new Date(dataPagamento);
+    validade.setDate(validade.getDate() + 3);
+    const hoje = new Date();
+
+    const check = hoje < validade;
+    return {
+      validade: check,
+      email: response.email,
+      created: response.timestamp
+    }
+
+  } catch (error) {
+    console.error("❌ Erro ao buscar pagamento:", error);
+    throw error;
+  }
+}
 

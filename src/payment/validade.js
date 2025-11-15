@@ -1,4 +1,4 @@
-import { buscarPagamentosEmail } from "./mercadopagoDB.js";
+import { buscarPagamentosEmail, infoCadastro } from "./mercadopagoDB.js";
 
 export async function verificarValidade(req, res, next) {
   try {
@@ -10,7 +10,8 @@ export async function verificarValidade(req, res, next) {
 
     const email = req.usuario.email;
     console.log("🔎 Verificando pagamento do email:", email);
-
+    const periodoDeTeste = await infoCadastro(email);
+    if(periodoDeTeste.validade)next()
     // Buscar pagamento no banco
     const pagamento = await buscarPagamentosEmail(email);
     console.log("📌 Pagamento encontrado:", pagamento);

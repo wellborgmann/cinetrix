@@ -155,8 +155,7 @@ app.post("/webhook", async (req, res) => {
 
 
 
-// Rotas protegidas de conteúdo
 app.use("/api/midias", midiasRouter);
 
-// Exporta o app sem iniciar servidor
+
 export default app;

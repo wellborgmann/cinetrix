@@ -111,8 +111,8 @@ app.get("/proxy", async (req, res) => {
    Enviar streaming para TV
 ------------------------------------------------------*/
 app.post("/send", async (req, res) => {
-  const { tvId, url, streaming } = req.body;
-
+  const { tvId, url } = req.body;
+  const streaming = false;
   if (!tvId || !url) {
     return res.status(400).json({ error: "Dados inválidos" });
   }

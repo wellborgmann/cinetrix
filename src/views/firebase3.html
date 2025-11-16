@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Enviar Mensagem</title>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+</head>
+<body>
+
+  <h2>Enviar Mensagem</h2>
+  <input id="msg" placeholder="Digite algo...">
+  <button onclick="enviar()">Enviar</button>
+
+  <hr>
+
+  <h3>Mensagens recebidas:</h3>
+  <div id="lista"></div>
+
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyDyTPB8AGmRblWoQmD9L238qcViJBCgKpU",
+      authDomain: "m3ulogin.firebaseapp.com",
+      databaseURL: "https://m3ulogin-default-rtdb.firebaseio.com",
+      projectId: "m3ulogin",
+      storageBucket: "m3ulogin.firebasestorage.app",
+      messagingSenderId: "526621746199",
+      appId: "1:526621746199:web:7de447517d8feed3342852",
+      measurementId: "G-RTGM1DLXVK"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    function enviar() {
+      const texto = document.getElementById("msg").value.trim();
+      if (!texto) return;
+
+      // ✔ Envia sem apagar o nó, criando um ID único
+      db.ref("mensagens2").push({
+        texto,
+        hora: Date.now()
+      });
+
+      document.getElementById("msg").value = "";
+    }
+
+    // ✔ Recebe cada nova mensagem em tempo real
+    db.ref("mensagens2").on("aaaaaa", snap => {
+      const msg = snap.val();
+
+      const div = document.createElement("div");
+      div.innerHTML = `<p><b>${new Date(msg.hora).toLocaleTimeString()}:</b> ${msg.texto}</p>`;
+      document.getElementById("lista").appendChild(div);
+    });
+  </script>
+
+</body>
+</html>

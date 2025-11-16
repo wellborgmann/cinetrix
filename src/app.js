@@ -11,6 +11,7 @@ import { registrarAprovado } from "./payment/mercadopagoDB.js";
 import { buscarPagamentos } from "./payment/mercadopagoDB.js"; // <– coloquei pq vc usa no webhook
 import midiasRouter from "./routes/midias.js";
 import { autenticarToken } from "./autenticarToken.js";
+import { cast } from "./firebase.js"
 dotenv.config();
 
 const SECRET = process.env.SECRET;
@@ -32,6 +33,17 @@ app.use(express.static(path.join(__dirname, "public")));
 app.get("/", (_, res) =>
   res.sendFile(path.join(__dirname, "views", "index.html"))
 );
+
+app.get("/firebase", (_, res) =>
+  res.sendFile(path.join(__dirname, "views", "firebase.html"))
+);
+
+app.get("/tv", (_, res) =>
+  res.sendFile(path.join(__dirname, "views", "tv.html"))
+);
+
+
+
 app.get("/forgot", (_, res) =>
   res.sendFile(path.join(__dirname, "views", "forgot.html"))
 );
@@ -46,6 +58,21 @@ app.get("/home", autenticarToken, (req, res) => {
 
 app.get("/pix",  (req, res) => {
   res.sendFile(path.join(__dirname, "views", "pix.html"));
+});
+
+app.post("/send", async (req, res) => {
+    const { tvId, url, streaming } = req.body;
+
+    if (!tvId || !url) {
+        return res.status(400).json({ error: "Dados inválidos" });
+    }
+    try {
+           await cast(tvId, url, streaming );
+    res.json({ ok: true });
+    } catch (error) {
+        res.status(400).send()
+    }
+ 
 });
 
 // Rotas APIs

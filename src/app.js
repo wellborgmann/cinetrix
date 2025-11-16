@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import fetch from "node-fetch"; // versão 2
-
+import cors from "cors";
 import { cadastrar, login, solicitarRecuperacao, redefinirSenha } from "./auth.js";
 import { criarPagamentoPix, consultarPagamento } from "./payment/mercadopago.js";
 import { registrarAprovado } from "./payment/mercadopagoDB.js";

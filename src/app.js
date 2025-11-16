@@ -4,6 +4,7 @@ import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import fetch from "node-fetch"; // versão 2
 
 import { cadastrar, login, solicitarRecuperacao, redefinirSenha } from "./auth.js";
 import { criarPagamentoPix, consultarPagamento } from "./payment/mercadopago.js";
@@ -58,6 +59,8 @@ app.get("/pix",  (req, res) => {
   res.sendFile(path.join(__dirname, "views", "pix.html"));
 });
 
+
+
 app.get("/proxy", async (req, res) => {
   const url = req.query.url;
   if (!url) return res.status(400).send("URL inválida");
@@ -67,14 +70,14 @@ app.get("/proxy", async (req, res) => {
     const contentType = response.headers.get("content-type");
     res.setHeader("Content-Type", contentType);
 
-    // Converte para arrayBuffer e envia
-    const buffer = Buffer.from(await response.arrayBuffer());
-    res.send(buffer);
+    // streaming real
+    response.body.pipe(res);
   } catch (err) {
     console.error(err);
     res.status(500).send("Erro ao buscar vídeo");
   }
 });
+
 
 
 app.post("/send", async (req, res) => {

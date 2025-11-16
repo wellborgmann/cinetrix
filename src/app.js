@@ -67,13 +67,15 @@ app.get("/proxy", async (req, res) => {
     const contentType = response.headers.get("content-type");
     res.setHeader("Content-Type", contentType);
 
-    // envia em streaming
-    response.body.pipe(res);
+    // Converte para arrayBuffer e envia
+    const buffer = Buffer.from(await response.arrayBuffer());
+    res.send(buffer);
   } catch (err) {
     console.error(err);
     res.status(500).send("Erro ao buscar vídeo");
   }
 });
+
 
 app.post("/send", async (req, res) => {
     const { tvId, url, streaming } = req.body;

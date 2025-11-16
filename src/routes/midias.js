@@ -59,4 +59,23 @@ router.get("/buscar/:query", (req, res) => {
   res.json(result);
 });
 
+// rota proxy para qualquer vídeo HTTP
+router.get("/proxy", async (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).send("URL inválida");
+
+  try {
+    const response = await fetch(url);
+    const contentType = response.headers.get("content-type");
+    res.setHeader("Content-Type", contentType);
+
+    // envia em streaming
+    response.body.pipe(res);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro ao buscar vídeo");
+  }
+});
+
+
 export default router;

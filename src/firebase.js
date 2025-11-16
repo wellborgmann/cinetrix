@@ -32,7 +32,7 @@ export async function cast(tvId, url, streaming) {
     await addDoc(
       collection(db, "tvs", tvId, "mensagens"),
       {
-        url: `https://cinetrix.vercel.app/proxy?url=${url}`,
+        url,
         streaming,
         hora: Date.now()
       }

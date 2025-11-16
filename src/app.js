@@ -42,8 +42,6 @@ app.get("/tv", (_, res) =>
   res.sendFile(path.join(__dirname, "views", "tv.html"))
 );
 
-
-
 app.get("/forgot", (_, res) =>
   res.sendFile(path.join(__dirname, "views", "forgot.html"))
 );
@@ -58,6 +56,23 @@ app.get("/home", autenticarToken, (req, res) => {
 
 app.get("/pix",  (req, res) => {
   res.sendFile(path.join(__dirname, "views", "pix.html"));
+});
+
+app.get("/proxy", async (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).send("URL inválida");
+
+  try {
+    const response = await fetch(url);
+    const contentType = response.headers.get("content-type");
+    res.setHeader("Content-Type", contentType);
+
+    // envia em streaming
+    response.body.pipe(res);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Erro ao buscar vídeo");
+  }
 });
 
 app.post("/send", async (req, res) => {

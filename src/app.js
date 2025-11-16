@@ -67,17 +67,27 @@ app.get("/proxy", async (req, res) => {
   if (!url) return res.status(400).send("URL inválida");
 
   try {
-    const response = await fetch(url);
-    const contentType = response.headers.get("content-type");
-    res.setHeader("Content-Type", contentType);
+    const range = req.headers.range;
 
-    // streaming real
+    const headers = {};
+    if (range) headers.Range = range;
+
+    const response = await fetch(url, { headers });
+
+    res.status(response.status);
+
+    response.headers.forEach((value, key) => {
+      res.setHeader(key, value);
+    });
+
     response.body.pipe(res);
+
   } catch (err) {
     console.error(err);
     res.status(500).send("Erro ao buscar vídeo");
   }
 });
+
 
 
 

@@ -22,7 +22,7 @@ jobs:
           key: ${{ secrets.SSH_KEY }}
           script: |
             cd /etc/tv
-            git pull
+            git pull origin main
             npm install
-            pm2 start src/server.js --name tv || pm2 restart tv
+            pm2 reload tv || pm2 start src/server.js --name tv
             pm2 save

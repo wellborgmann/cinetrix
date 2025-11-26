@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pagamento PIX</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            width: 95%;
+            max-width: 420px;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h2 {
+            margin-top: 5px;
+            color: #222;
+        }
+
+        .price-box {
+            background: #f8f8f8;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        input[type="number"] {
+            width: 80px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+
+        button {
+            background: #0f62fe;
+            color: #fff;
+            border: none;
+            padding: 12px 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            font-size: 17px;
+            cursor: pointer;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        button:hover {
+            background: #0041c4;
+        }
+
+        .pix-area {
+            display: none;
+            margin-top: 25px;
+        }
+
+        img.qr {
+            width: 240px;
+            height: auto;
+            border-radius: 10px;
+            margin-top: 15px;
+            background: #fff;
+            padding: 10px;
+        }
+
+        .copy-box {
+            margin-top: 20px;
+            background: #f7f7f7;
+            padding: 12px;
+            border-radius: 10px;
+            word-wrap: break-word;
+            text-align: left;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            background: #49b043;
+        }
+
+        .copy-btn:hover {
+            background: #3c8e37;
+        }
+
+        .msg {
+            margin-top: 10px;
+            color: green;
+            font-size: 15px;
+            display: none;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <h2>Pagamento via PIX</h2>
+
+    <p>Olá, <strong id="email-user">carregando...</strong></p>
+
+    <div class="price-box">
+        Valor: <strong id="valor">R$ 10,00</strong><br>
+        <small>Escolha quantos meses:</small><br>
+        <input type="number" id="meses" min="0" max="12" value="1">
+    </div>
+
+    <button id="btnCriarPix">Gerar PIX</button>
+
+    <!-- ÁREA DO PIX GERADO -->
+    <div class="pix-area" id="pixArea">
+
+        <h3>Escaneie o QR Code</h3>
+        <img id="qrImg" class="qr" src="" alt="QR Code PIX">
+
+        <div class="copy-box">
+            <strong>Chave copia e cola:</strong>
+            <p id="copyPix"></p>    
+            <button class="copy-btn" onclick="copiar()">Copiar chave PIX</button>
+            <button id="url">link do mercadopago</button>
+            <p class="msg" id="msgCopiado">Copiado!</p>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    const mesesInput = document.getElementById("meses");
+    const spanValor = document.getElementById("valor");
+
+    mesesInput.addEventListener("input", () => {
+        let q = Number(mesesInput.value);
+
+        if (q < 1) q = mesesInput.value = 1;
+        if (q > 12) q = mesesInput.value = 12;
+
+        spanValor.textContent = `R$ ${q * 10},00`;
+    });
+
+    // PEGAR EMAIL DO ANDROID WEBVIEW
+    window.onload = function () {
+        try {
+             const emailElement = document.getElementById('email-user');
+
+        if (typeof Android !== "undefined" && typeof Android.getUserEmail === "function") {
+            const email = Android.getUserEmail();
+            emailElement.textContent = email || "Visitante";
+        } else {
+            emailElement.textContent = "usuário";
+        }
+        } catch (error) {
+            
+        }
+       
+    };
+
+    // ENVIAR PARA A API
+    document.getElementById("btnCriarPix").addEventListener("click", async () => {
+        const email = document.getElementById("email-user").textContent;
+        const quant = Number(mesesInput.value);
+        const description = `Assinatura de ${quant} mês(es)`;
+
+        const body = { quant, description, email };
+        if(quant < 1 || !email)return
+        const res = await fetch("/create-pix-payment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+
+        const data = await res.json();
+
+        console.log("RESPOSTA PIX:", data);
+
+        if (!data.qr_code || !data.copy) {
+            alert("Erro ao gerar PIX.");
+            return;
+        }
+
+        // MOSTRAR ÁREA DO PIX
+        document.getElementById("pixArea").style.display = "block";
+
+        // ⚡ INSERIR QR CODE BASE64
+        document.getElementById("qrImg").src = `data:image/png;base64,${data.qr_code}`;
+
+        // ⚡ INSERIR CHAVE COPIA E COLA
+        document.getElementById("copyPix").textContent = data.copy;
+
+        // ⚡ BOTÃO LINK DO MERCADO PAGO
+        document.getElementById("url").onclick = () => {
+            window.location.href = data.url;
+        };
+    });
+
+    // COPIAR CHAVE
+    function copiar() {
+        const chave = document.getElementById("copyPix").textContent;
+        navigator.clipboard.writeText(chave);
+
+        const msg = document.getElementById("msgCopiado");
+        msg.style.display = "block";
+        setTimeout(() => msg.style.display = "none", 1500);
+    }
+</script>
+
+
+
+</body>
+</html>

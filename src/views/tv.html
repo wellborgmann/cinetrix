@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TV Player Remoto</title>
+  <!-- Tailwind CSS para estilização moderna e responsiva -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Biblioteca Hls.js para streams M3U8/HLS -->
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@1.5.12"></script>
+</head>
+<style>
+  /* Configuração de fonte e cor de fundo padrão */
+  body {
+    font-family: 'Inter', sans-serif;
+    background-color: #1a1a1a;
+    color: white;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  /* Estilo para centralizar o player na tela de dispositivos maiores */
+  .player-container {
+    width: 100%;
+    max-width: 4xl;
+  }
+</style>
+<body>
+
+  <!-- Título e Código da TV -->
+  <header class="text-center mb-6 w-full player-container">
+    <h1 class="text-3xl font-bold mb-2">
+      Player Remoto
+    </h1>
+    <p class="text-xl font-medium">
+      Código da TV: <span id="codigo" class="text-indigo-400 font-extrabold">...</span>
+    </p>
+  </header>
+
+  <!-- Container do Vídeo e Status -->
+  <div class="player-container bg-gray-900 rounded-xl shadow-2xl p-4">
+    <!-- ATUALIZAÇÃO CRUCIAL: Adicionado 'muted' para permitir autoplay (sem som) -->
+    <video id="player" controls autoplay muted class="w-full rounded-lg"></video>
+    <p id="status" class="mt-3 text-center text-sm text-gray-400">Aguardando o próximo vídeo...</p>
+    <!-- Mensagem de erro de autoplay (escondida por padrão) -->
+    <p id="autoplay-error" class="mt-2 text-center bg-red-800 text-white p-2 rounded-lg font-bold hidden cursor-pointer">
+      ▶️ CLIQUE AQUI PARA INICIAR (e ativar o som)!
+    </p>
+  </div>
+
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-app.js";
+    import {
+      getFirestore,
+      collection,
+      query,
+      orderBy,
+      onSnapshot,
+    } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+    import { setLogLevel } from "https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore.js";
+
+    setLogLevel('silent'); 
+
+    // Configuração do Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyDyTPB8AGmRblWoQmD9L238qcViJBCgKpU",
+      authDomain: "m3ulogin.firebaseapp.com",
+      projectId: "m3ulogin",
+      storageBucket: "m3ulogin.firebasestorage.app",
+      messagingSenderId: "526621746199",
+      appId: "1:526621746199:web:7de447517d8feed3342852",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // ------------------------
+    // GERAR ID (6 dígitos)
+    // ------------------------
+    function gerarCodigoTV() {
+      const now = new Date();
+      const h = now.getHours().toString().padStart(2, "0");
+      const m = now.getMinutes().toString().padStart(2, "0");
+      const s = now.getSeconds().toString().padStart(2, "0");
+      return `${h}${m}${s}`;
+    }
+
+    // ------------------------
+    // ID PERSISTENTE E EXIBIÇÃO
+    // ------------------------
+    let tvId = localStorage.getItem("tvId");
+
+    if (!tvId) {
+      tvId = gerarCodigoTV();
+      localStorage.setItem("tvId", tvId);
+    }
+
+    document.getElementById("codigo").innerText = tvId;
+
+    let hlsInstance = null;
+    const autoplayError = document.getElementById("autoplay-error");
+
+    /**
+     * Tenta iniciar a reprodução do vídeo e lida com erros de Autoplay (navegadores modernos).
+     */
+    function tryPlayVideo(video, type, fallbackToHls = false, url = null, statusElement = null) {
+      // 1. Tenta o play
+      video.play()
+        .then(() => {
+          console.log(`[Playback] ${type} iniciado com sucesso.`);
+          autoplayError.classList.add('hidden');
+        })
+        .catch(error => {
+          const isInterruption = error.name === 'AbortError';
+          
+          // Se for uma interrupção por um novo load (comum no onSnapshot), apenas loga e ignora o erro de Playback
+          if (isInterruption) {
+            console.warn(`[Playback] Tentativa de play interrompida por novo load.`);
+            return;
+          }
+
+          // 2. Se falhar, verifica se deve tentar o fallback para HLS.js
+          if (fallbackToHls && Hls.isSupported() && url && error.name === 'NotSupportedError') {
+              console.warn(`[Fallback] Reprodução nativa falhou. Tentando forçar Hls.js para: ${url}`);
+              // Chama a função Hls.js (recursivamente, mas agora com flag HLS)
+              tocarHls(video, statusElement, url);
+              return;
+          }
+
+          // 3. Se for um erro de Autoplay (não interrupção e não suportado), exibe o erro
+          console.error(`[Playback Error] Falha ao iniciar ${type}. Autoplay bloqueado ou mídia não suportada:`, error);
+          document.getElementById("status").innerText = `Carregado. Interaja para iniciar.`;
+          autoplayError.classList.remove('hidden');
+
+          // Listener para iniciar a reprodução (e desmutar) após interação do usuário
+          const startPlayback = () => {
+            video.muted = false; // Desmuta o áudio
+            video.play().catch(e => {
+              console.error("Falha ao iniciar com interação:", e);
+              // Se falhar mesmo com interação (e for NotSupportedError), o link é inválido ou o formato não é reconhecido.
+              if (e.name === 'NotSupportedError') {
+                document.getElementById("status").innerText = `ERRO: Formato de mídia não suportado ou link inválido.`;
+              }
+            });
+            autoplayError.classList.add('hidden');
+            // Remove listeners para que o evento só ocorra uma vez
+            document.removeEventListener('click', startPlayback);
+            document.removeEventListener('touchstart', startPlayback);
+          };
+
+          // Tenta iniciar com o primeiro clique ou toque
+          document.addEventListener('click', startPlayback, { once: true });
+          document.addEventListener('touchstart', startPlayback, { once: true });
+        });
+    }
+
+    /**
+     * Toca o vídeo usando Hls.js.
+     */
+    function tocarHls(video, statusElement, url) {
+        // 1. Limpa o estado HLS anterior
+        if (hlsInstance) {
+            hlsInstance.destroy();
+            hlsInstance = null;
+        }
+        
+        console.log(`MODO: Streaming HLS/M3U8 via hls.js (URL: ${url})`);
+        
+        if (Hls.isSupported()) {
+            hlsInstance = new Hls({
+                manifestLoadingTimeOut: 15000, // Tempo extra para manifestos lentos
+                // Configurações para tentar carregar streams TS que não são manifestos M3U8
+                // Embora não seja 100% garantido, tenta tratar o .ts como um stream
+            });
+
+            hlsInstance.attachMedia(video);
+
+            hlsInstance.on(Hls.Events.MEDIA_ATTACHED, function () {
+                hlsInstance.loadSource(url);
+                statusElement.innerText = "Stream carregado. Tentando play...";
+            });
+
+            hlsInstance.on(Hls.Events.MANIFEST_PARSED, function () {
+                tryPlayVideo(video, "HLS");
+            });
+
+            hlsInstance.on(Hls.Events.ERROR, function (event, data) {
+                if (data.fatal) {
+                    console.error("Erro fatal HLS:", data);
+                    statusElement.innerText = `ERRO FATAL HLS: ${data.details}. Verifique o console para mais detalhes.`;
+                    
+                    if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+                        hlsInstance.startLoad();
+                    } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+                        hlsInstance.recoverMediaError();
+                    } else {
+                        hlsInstance.destroy();
+                    }
+                }
+            });
+        } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
+            // Fallback para HLS nativo (Safari/iOS)
+            console.log("MODO: HLS Nativo do Navegador (Safari/iOS)");
+            video.src = url;
+            statusElement.innerText = "Carregando HLS nativo...";
+            tryPlayVideo(video, "HLS Nativo");
+        } else {
+            statusElement.innerText = "Navegador não suporta HLS.";
+        }
+    }
+
+    /**
+     * Função principal para receber e tocar o vídeo.
+     */
+    function tocarVideo(data) {
+      const video = document.getElementById("player");
+      const statusElement = document.getElementById("status");
+      const url = data.url;
+
+      if (!url) {
+        statusElement.innerText = "URL do vídeo não fornecida.";
+        return;
+      }
+
+      console.log(`[Nova URL] Recebendo: ${url}`);
+      statusElement.innerText = "Preparando mídia...";
+      autoplayError.classList.add('hidden');
+
+      // 1. Limpa o estado anterior
+      if (hlsInstance) {
+        hlsInstance.destroy();
+        hlsInstance = null;
+      }
+      video.removeAttribute('src'); 
+      video.load(); 
+      video.muted = true; // Reinicia mudo para garantir novo autoplay
+      
+      // 2. Tenta o Modo Nativo (para MP4 ou .TS que o navegador possa suportar)
+      if (!url.includes(".m3u8")) {
+        console.log("MODO: Tentativa Mídia Padrão (Direto)");
+        video.src = url;
+        statusElement.innerText = "Carregando mídia padrão...";
+        
+        // Adiciona um listener para falha de carregamento nativo
+        const loadErrorListener = () => {
+            console.warn("[Media Error] Falha no carregamento nativo. Iniciando Fallback HLS.");
+            // Remove o listener para evitar loops
+            video.removeEventListener('error', loadErrorListener);
+            // Tenta o HLS.js como fallback
+            tocarHls(video, statusElement, url);
+        };
+        
+        video.addEventListener('error', loadErrorListener);
+        
+        // Tenta iniciar a reprodução. Se falhar com NotSupportedError, o tryPlayVideo fará o fallback.
+        tryPlayVideo(video, "Mídia Padrão", true, url, statusElement);
+
+      } else {
+        // 3. Se for .m3u8, vai direto para HLS.js
+        tocarHls(video, statusElement, url);
+      }
+    }
+
+    // ------------------------
+    // ESCUTAR MENSAGENS
+    // ------------------------
+    function ouvirMensagens() {
+      const q = query(
+        collection(db, "tvs", tvId, "mensagens"),
+        orderBy("hora", "desc")
+      );
+
+      onSnapshot(q, snapshot => {
+        snapshot.docChanges().forEach(change => {
+          if (change.type === "added") {
+            const data = change.doc.data();
+            tocarVideo(data);
+          }
+        });
+      }, error => {
+        console.error("Erro ao escutar mensagens do Firestore:", error);
+        document.getElementById("status").innerText = "ERRO de conexão com o Firebase.";
+      });
+    }
+
+    ouvirMensagens();
+  </script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recuperar Senha</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .oculto {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Recuperar Senha</h2>
+    <form id="formRecuperar">
+      <input type="email" id="email" placeholder="Seu e-mail" required />
+      <button type="submit">Enviar link</button>
+    </form>
+    <br>
+      <a href="/">Voltar</a>
+    <p id="mensagem"></p>
+  </div>
+
+  <script>
+    const form = document.getElementById("formRecuperar");
+    const emailInput = document.getElementById("email");
+    const btn = form.querySelector("button");
+    const msg = document.getElementById("mensagem");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = emailInput.value.trim();
+      if (!email) return;
+
+      // Esconde o input e o botão para evitar reenvio
+      emailInput.classList.add("oculto");
+      btn.classList.add("oculto");
+      msg.textContent = "Enviando link...";
+      msg.style.color = "blue";
+
+      try {
+        const res = await fetch("/api/recuperar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await res.json();
+
+        if (data.sucesso) {
+          msg.textContent = data.mensagem || "Link de recuperação enviado! Verifique seu e-mail.";
+          msg.style.color = "green";
+        } else {
+          msg.textContent = data.erro || "Erro ao enviar o e-mail.";
+          msg.style.color = "red";
+          // Exibe novamente o input e o botão
+          emailInput.classList.remove("oculto");
+          btn.classList.remove("oculto");
+        }
+      } catch {
+        msg.textContent = "Erro ao conectar com o servidor.";
+        msg.style.color = "red";
+        // Exibe novamente o input e o botão
+        emailInput.classList.remove("oculto");
+        btn.classList.remove("oculto");
+      }
+    });
+  </script>
+</body>
+</html>

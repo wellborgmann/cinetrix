@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redefinir Senha</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Redefinir Senha</h2>
+    <form id="formReset">
+      <input type="password" id="senha" placeholder="Nova senha" required />
+      <button type="submit">Alterar senha</button>
+    </form>
+    <br>
+       <a href="/">Voltar</a>
+    <p id="mensagem"></p>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get("token");
+
+    if (!token) {
+      document.body.innerHTML = "<h3>Link inválido.</h3>";
+    }
+
+    document.getElementById("formReset").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const senha = document.getElementById("senha").value;
+      const msg = document.getElementById("mensagem");
+
+      try {
+        const res = await fetch("/api/resetar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+     body: JSON.stringify({ token, senha: String(senha) })
+        });
+
+        const data = await res.json();
+        msg.textContent = data.mensagem || data.erro;
+        msg.style.color = data.sucesso ? "green" : "red";
+      } catch {
+        msg.textContent = "Erro ao redefinir senha.";
+        msg.style.color = "red";
+        console
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "name": "m3u",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "auth",
+  "main": "./src/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node src/server.js"
+  },
+  "author": "wellborgmann",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "better-sqlite3": "^12.4.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "firebase": "^12.6.0",
+    "firebase-admin": "^13.6.0",
+    "jsonwebtoken": "^9.0.2",
+    "mercadopago": "^2.10.0",
+    "mysql2": "^3.15.3",
+    "node-fetch": "^3.3.2",
+    "nodemailer": "^7.0.10"
+  }
+}

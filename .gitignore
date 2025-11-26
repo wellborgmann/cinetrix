@@ -1,0 +1,16 @@
+# Dependências
+node_modules/
+
+# Variáveis de Ambiente e Arquivos de Build
+.env
+dist/
+build/
+*.log
+
+# Arquivos de Sistema
+.DS_Store
+npm-debug.log*
+
+# Arquivos grandes que devem ser ignorados
+midias.db
+lista.json

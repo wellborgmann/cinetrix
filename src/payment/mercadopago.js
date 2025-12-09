@@ -63,14 +63,7 @@ export async function consultarPagamento(paymentId) {
 }
 
 
-  (async ()=>{
-    try{
-     const data = await consultarPagamento("134387496478");
-    }catch(error){
-      
-    }
-    
-  })();
+
 
 
 export async function criarPagamentoPix(amount, description, email, notificationUrl = "https://cinetrix.vercel.app/webhook") {

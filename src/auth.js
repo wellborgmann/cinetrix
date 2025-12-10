@@ -45,7 +45,8 @@ export async function solicitarRecuperacao(email) {
   if (usuarios.length === 0) throw new Error("E-mail não encontrado.");
 
   const token = randomBytes(32).toString("hex");
-  const expires = new Date(Date.now() + 1000 * 60 * 15);
+const expires = new Date(Date.now() + 1000 * 60 * 60 * 24); // 24 horas
+
 
   await db.execute(
     "UPDATE login SET reset_token = ?, reset_expires = ? WHERE email = ?",
